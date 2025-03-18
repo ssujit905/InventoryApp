@@ -6,12 +6,14 @@ import StockIn from '../screens/StockIn';
 import Expenses from '../screens/Expenses';
 import Sales from '../screens/Sales';
 import Inventory from '../screens/Inventory';
-import Finance from '../screens/Finance';
+
+import FinanceDrawer from './FinanceDrawer';
 import UserRoles from '../screens/UserRoles';
 import CustomDrawerContent from './CustomDrawerContent';
 import { UserContext } from '../context/UserContext';
 import colors from '../styles/colors';
 import { Ionicons } from '@expo/vector-icons';
+
 
 const Drawer = createDrawerNavigator();
 
@@ -80,7 +82,8 @@ const DrawerNavigator = () => {
         <>
           <Drawer.Screen
             name="Finance"
-            component={Finance}
+
+            component={FinanceDrawer}
             options={{
               drawerIcon: ({ color, size }) => (
                 <Ionicons name="stats-chart" size={size} color={color} />
@@ -103,4 +106,3 @@ const DrawerNavigator = () => {
 };
 
 export default DrawerNavigator;
-

@@ -1,7 +1,61 @@
 import { StyleSheet } from "react-native";
 import colors from "./colors"; // Import your color theme
 
+
+
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+        padding: 10,
+    },
+
+
+searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.white,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    height: 45, // Ensures enough space for the icon
+},
+searchIcon: {
+    marginRight: 8,
+},
+searchInput: {
+    flex: 1,
+    height: 40,
+    fontSize: 16,
+    color: colors.text,
+},
+    card: {
+        backgroundColor: colors.white,
+        borderRadius: 8,
+        padding: 10,
+        marginBottom: 10,
+        elevation: 2,
+    },
+    serial: {
+        fontWeight: "bold",
+        fontSize: 16,
+        color: colors.primary,
+    },
+    cardContent: {
+        marginTop: 5,
+    },
+    cardText: {
+        color: colors.text,
+    },
+
+
+
+
   container: {
     flex: 1,
     backgroundColor: colors.background,

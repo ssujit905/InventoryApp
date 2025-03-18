@@ -43,10 +43,35 @@ const Sales = () => {
   const [editId, setEditId] = useState(null);
 
 
-  useEffect(() => {
-    fetchSales();
-  }, []);
+const SalesScreen = () => {
+    const [salesData, setSalesData] = useState([]);
+    const [filteredSales, setFilteredSales] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
 
+    // Fetch sales data from Firebase
+    useEffect(() => {
+        const fetchSales = async () => {
+            try {
+                const salesCollection = collection(db, "sales");
+                const salesSnapshot = await getDocs(salesCollection);
+                const salesList = salesSnapshot.docs.map((doc, index) => ({
+                    id: doc.id,
+                    serial: salesSnapshot.docs.length - index, // Serial in descending order
+                    ...doc.data(),
+                }));
+                setSalesData(salesList);
+                setFilteredSales(salesList);
+            } catch (error) {
+                console.error("Error fetching sales data:", error);
+            }
+        };
+        fetchSales();
+    }, []);
+
+    // Search filter function
+    const handleSearch = (text) => {
+        setSearchQuery(text);
+        if (text.trim(
   const fetchSales = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "sales"));

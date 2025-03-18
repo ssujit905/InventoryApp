@@ -1,0 +1,124 @@
+import React, { useState, useContext } from 'react';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Dashboard from '../screens/Dashboard';
+import StockIn from '../screens/StockIn';
+import Expenses from '../screens/Expenses';
+import Sales from '../screens/Sales';
+import Inventory from '../screens/Inventory';
+import Purchase from '../screens/Purchase';
+import Income from '../screens/Income';
+import ProfitLoss from '../screens/ProfitLoss';
+import UserRoles from '../screens/UserRoles';
+import CustomDrawerContent from './CustomDrawerContent';
+import { UserContext } from '../context/UserContext';
+import colors from '../styles/colors';
+
+const Drawer = createDrawerNavigator();
+
+const CustomDrawerItem = ({ label, icon, onPress, isExpanded, isSubItem = false }) => (
+  <TouchableOpacity onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: isSubItem ? '#ddd' : '#fff' }}>
+    <Ionicons name={icon} size={22} color={colors.primary} style={{ marginRight: 10 }} />
+    <Text style={{ fontSize: 16, color: colors.text }}>{label}</Text>
+    {!isSubItem && (
+      <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.primary} style={{ marginLeft: 'auto' }} />
+    )}
+  </TouchableOpacity>
+);
+
+const FinanceScreenPlaceholder = () => <View />; // Empty screen to avoid error
+
+const DrawerNavigator = () => {
+  const { role } = useContext(UserContext);
+  const [isFinanceExpanded, setFinanceExpanded] = useState(false);
+
+  return (
+    <Drawer.Navigator
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.primary },
+        headerTintColor: colors.white,
+        drawerStyle: { backgroundColor: colors.drawerBackground },
+        drawerActiveTintColor: colors.primary,
+        drawerInactiveTintColor: colors.drawerText,
+      }}
+    >
+      <Drawer.Screen
+        name="Dashboard"
+        component={Dashboard}
+        options={{
+          drawerIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+        }}
+      />
+      <Drawer.Screen
+        name="StockIn"
+        component={StockIn}
+        options={{
+          drawerIcon: ({ color, size }) => <Ionicons name="add-circle" size={size} color={color} />,
+        }}
+      />
+      <Drawer.Screen
+        name="Expenses"
+        component={Expenses}
+        options={{
+          drawerIcon: ({ color, size }) => <Ionicons name="cash-outline" size={size} color={color} />,
+        }}
+      />
+      <Drawer.Screen
+        name="Sales"
+        component={Sales}
+        options={{
+          drawerIcon: ({ color, size }) => <Ionicons name="pricetag" size={size} color={color} />,
+        }}
+      />
+      <Drawer.Screen
+        name="Inventory"
+        component={Inventory}
+        options={{
+          drawerIcon: ({ color, size }) => <Ionicons name="list" size={size} color={color} />,
+        }}
+      />
+
+      {/* Admin Only: Finance & User Roles */}
+      {role === 'admin' && (
+        <>
+          {/* Finance Dropdown */}
+          <Drawer.Screen
+            name="FinanceToggle"
+            component={FinanceScreenPlaceholder} // Avoids inline function warning
+            options={{
+              drawerLabel: () => (
+                <CustomDrawerItem
+                  label="Finance"
+                  icon="stats-chart"
+                  onPress={() => setFinanceExpanded(!isFinanceExpanded)}
+                  isExpanded={isFinanceExpanded}
+                />
+              ),
+            }}
+          />
+
+          {/* Finance Sub-Drawer Items */}
+          {isFinanceExpanded && (
+            <>
+              <Drawer.Screen
+                name="Purchase"
+                component={Purchase}
+                options={{
+                  drawerLabel: () => <CustomDrawerItem label="Purchase" icon="pricetag" isSubItem />,
+                }}
+              />
+              <Drawer.Screen
+                name="Income"
+                component={Income}
+                options={{
+                  drawerLabel: () => <CustomDrawerItem label="Income" icon="wallet" isSubItem />,
+                }}
+              />
+              <Drawer.Screen
+                name="Profit/Loss"
+                component={ProfitLoss}
+                options={{
+                  drawerLabel: () => <CustomDrawerItem label="Profit/Loss" icon="trending-up" isSubItem />,
+

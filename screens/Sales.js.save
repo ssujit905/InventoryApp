@@ -28,6 +28,8 @@ const getStatusStyle = (status) => {
 
 const Sales = () => {
   const [sales, setSales] = useState([]);
+
+
   const [modalVisible, setModalVisible] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -41,7 +43,6 @@ const Sales = () => {
     status: "Parcel Processing",
   });
   const [editId, setEditId] = useState(null);
-
 
   useEffect(() => {
     fetchSales();

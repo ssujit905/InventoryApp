@@ -1,12 +1,10 @@
-// styles/colors.js
 export default {
-  primary: "#1E88E5",       // Brand Primary Color
-  secondary: "#FFC107",     // Accent Color
-  background: "#F5F5F5",
-  text: "#212121",
-  white: "#FFFFFF",
-  black: "#000000",
-  drawerBackground: "#37474F",
-  drawerText: "#ECEFF1",
+  primary: "#2A4BA0",       // Primary color for buttons, titles, etc.
+  secondary: "#FFC75F",     // Secondary color for quote card
+  background: "#F5F5F5",    // Background color for the app
+  white: "#FFFFFF",         // White color for cards and text
+  black: "#000000",         // Black color for shadows
+  text: "#333333",          // Default text color
+  success: "#4CAF50",       // Green for delivered sales
+  error: "#FF5252",         // Red for returned sales
 };
-

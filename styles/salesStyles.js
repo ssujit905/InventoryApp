@@ -172,7 +172,7 @@ statusText: {
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+marginTop: 5,
   },
   addButton: {
     backgroundColor: colors.primary,

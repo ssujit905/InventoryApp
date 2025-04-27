@@ -13,9 +13,12 @@ import {
   Platform,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { collection, addDoc, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { AntDesign, MaterialIcons, FontAwesome } from "@expo/vector-icons";
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import XLSX from 'xlsx';
 import styles from "../styles/salesStyles";
 import colors from "../styles/colors";
 
@@ -202,8 +205,107 @@ const Sales = () => {
     fetchSales().finally(() => setRefreshing(false));
   };
 
+  const exportToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      // Get today's sales data
+      const today = new Date().toISOString().split('T')[0];
+      const q = query(collection(db, "sales"), where("date", "==", today));
+      const querySnapshot = await getDocs(q);
+      
+      const todaySales = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        products: doc.data().products.map(p => `${p.productCode} (Qty: ${p.quantity})`).join(', ')
+      }));
+
+      if (todaySales.length === 0) {
+        Alert.alert("Info", "No sales data found for today.");
+        return;
+      }
+
+      // Prepare worksheet
+      const ws = XLSX.utils.json_to_sheet(todaySales.map(sale => ({
+        "Date": sale.date,
+        "Customer Name": sale.customerName,
+        "Phone 1": sale.phone1,
+        "Phone 2": sale.phone2 || 'N/A',
+        "Destination Branch": sale.destinationBranch,
+        "Full Address": sale.fullAddress,
+        "Products": sale.products,
+        "COD Amount": sale.codAmount,
+        "Status": sale.status
+      })));
+
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Today's Sales");
+
+      // Generate Excel file
+      const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+      const uri = FileSystem.cacheDirectory + `TodaySales_${new Date().getTime()}.xlsx`;
+      
+      await FileSystem.writeAsStringAsync(uri, wbout, {
+        encoding: FileSystem.EncodingType.Base64
+      });
+
+      // Save to downloads folder (Android)
+      if (Platform.OS === 'android') {
+        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        
+        if (permissions.granted) {
+          const downloadUri = permissions.directoryUri + `/TodaySales_${new Date().getTime()}.xlsx`;
+          await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, `TodaySales_${new Date().getTime()}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            .then(async (uri) => {
+              await FileSystem.writeAsStringAsync(uri, wbout, { encoding: FileSystem.EncodingType.Base64 });
+              Alert.alert("Success", "Excel file downloaded successfully!");
+            })
+            .catch(e => {
+              console.error(e);
+              Alert.alert("Error", "Failed to save file. Please try again.");
+            });
+        }
+      } else {
+        // For iOS, we'll just save to cache and allow user to view
+        Alert.alert(
+          "Success", 
+          "Excel file generated successfully!",
+          [
+            {
+              text: "OK",
+              onPress: () => Sharing.shareAsync(uri)
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      Alert.alert("Error", "Failed to export data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Sales Orders</Text>
+        <TouchableOpacity 
+          onPress={exportToExcel}
+          style={styles.exportButton}
+          disabled={loading}
+        >
+
+          <FontAwesome name="file-excel-o" size={20} color={colors.white} />
+
+
+          <Text style={styles.exportButtonText}>Export Today</Text>
+
+
+        </TouchableOpacity>
+      </View>
+
       {loading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
       )}
@@ -442,13 +544,6 @@ const Sales = () => {
                 <Text style={styles.buttonText}>
                   {editId ? "UPDATE ORDER" : "CREATE ORDER"}
                 </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                onPress={() => setModalVisible(false)} 
-                style={[styles.button, styles.cancelButton]}
-              >
-                <Text style={[styles.buttonText, { color: colors.primary }]}>CANCEL</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>

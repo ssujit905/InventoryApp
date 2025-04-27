@@ -230,5 +230,37 @@ export default StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.white,
+
   },
+header: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: 15,
+  backgroundColor: colors.white,
+  borderBottomWidth: 1,
+  borderBottomColor: colors.secondary,
+},
+
+headerTitle: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: colors.primary,
+},
+exportButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: 8,
+  backgroundColor: colors.primary,
+borderRadius: 5,
+  borderWidth: 1,
+  borderColor: colors.primary,
+},
+exportButtonText: {
+  marginLeft: 5,
+  color: colors.white,
+  fontWeight: '500',
+},
+
+
 });

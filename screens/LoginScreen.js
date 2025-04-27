@@ -37,7 +37,6 @@ const LoginScreen = () => {
     <ImageBackground 
       source={require('../assets/login-bg.jpg')}
       style={styles.background}
-      blurRadius={1} // Reduced blur for better visibility
     >
       <View style={styles.overlay}>
         <View style={styles.container}>
@@ -100,11 +99,11 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.7)', // More transparent overlay
+    backgroundColor: 'rgba(255,255,255,0)', // Completely transparent overlay
     justifyContent: 'center',
   },
   container: {
-    backgroundColor: colors.white,
+    backgroundColor: 'rgba(255,255,255,1)',
     borderRadius: 20,
     padding: 30,
     marginHorizontal: 25,

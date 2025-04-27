@@ -197,14 +197,14 @@ const Dashboard = () => {
     propsForLabels: {
       fontSize: 11,
     },
-    barPercentage: 0.5, // Makes bars narrower
+    barPercentage: 0.5,
   };
 
   return (
     <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
       <ScrollView
         style={dashboardStyles.container}
-        contentContainerStyle={dashboardStyles.contentContainer}
+        contentContainerStyle={[dashboardStyles.contentContainer, { paddingBottom: 20 }]}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} colors={[colors.primary]} />}
       >
         {/* Header and Search */}
@@ -286,7 +286,6 @@ const Dashboard = () => {
                 "The biggest risk is not taking any risk. In a world that's changing quickly, the only strategy that is
                 guaranteed to fail is not taking risks."
               </Text>
-              <Text style={dashboardStyles.signature}>Sujit Singh Creation</Text>
             </View>
 
             {/* Key Metrics in a 2-column layout */}
@@ -319,7 +318,7 @@ const Dashboard = () => {
               </View>
             </View>
 
-            {/* Last 7 Days Bar Chart - Updated to show all 7 days */}
+            {/* Last 7 Days Bar Chart */}
             <Text style={dashboardStyles.sectionTitle}>Sales Trend (Last 7 Days)</Text>
             <View style={[dashboardStyles.chartContainer, { paddingHorizontal: 0 }]}>
               <BarChart
@@ -332,14 +331,14 @@ const Dashboard = () => {
                     )
                   }],
                 }}
-                width={screenWidth - 20}  // Reduced width to fit all bars
+                width={screenWidth - 20}
                 height={220}
                 fromZero
                 showValuesOnTopOfBars
                 chartConfig={chartConfig}
                 style={{ 
                   borderRadius: 12,
-                  marginLeft: -15,  // Negative margin to compensate
+                  marginLeft: -15,
                 }}
                 verticalLabelRotation={30}
                 withInnerLines={false}
@@ -382,6 +381,12 @@ const Dashboard = () => {
                 ))}
               </>
             )}
+
+            {/* Footer */}
+            <View style={dashboardStyles.footer}>
+              <Text style={dashboardStyles.footerText}> ©sujit singh creation® </Text>
+
+            </View>
           </>
         )}
       </ScrollView>

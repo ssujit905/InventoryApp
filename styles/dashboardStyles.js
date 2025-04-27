@@ -311,7 +311,20 @@ summaryCard: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-  },
+  }, 
+footer: {
+  marginTop: 30,
+  paddingVertical: 10,
+  borderTopWidth: 1,
+  borderTopColor: '#eee',
+  alignItems: 'center',
+},
+footerText: {
+  fontSize: 10,
+  fontWeight: '600',
+  color: colors.black,
+},
+
 });
 
 export default dashboardStyles;

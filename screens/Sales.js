@@ -300,8 +300,7 @@ const Sales = () => {
           <FontAwesome name="file-excel-o" size={20} color={colors.white} />
 
 
-          <Text style={styles.exportButtonText}>Export Today</Text>
-
+          <Text style={styles.exportButtonText}>Export </Text>
 
         </TouchableOpacity>
       </View>

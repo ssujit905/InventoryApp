@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
-  TouchableOpacity, RefreshControl
+  TouchableOpacity, RefreshControl, Modal, TouchableWithoutFeedback
 } from 'react-native';
 import { collection, getDocs, setDoc, doc, Timestamp, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import colors from '../styles/colors';
 import { format, parse } from 'date-fns';
+import { Dropdown } from 'react-native-element-dropdown';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const MonthlyProfit = () => {
   const [expenses, setExpenses] = useState(0);
@@ -16,6 +18,9 @@ const MonthlyProfit = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showPrevious, setShowPrevious] = useState(false);
   const [previousData, setPreviousData] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
 
   const now = new Date();
   const monthName = format(now, 'MMMM yyyy');
@@ -151,13 +156,120 @@ const MonthlyProfit = () => {
         const snapshot = await getDocs(collection(db, 'monthlyProfit'));
         const data = [];
         snapshot.forEach(doc => data.push(doc.data()));
-        setPreviousData(data.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds));
+        const sortedData = data.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
+        setPreviousData(sortedData);
+        if (sortedData.length > 0) {
+          setSelectedMonth(sortedData[0]);
+        }
         setShowPrevious(true);
       } catch {
         Alert.alert("Error", "Couldn't fetch previous data");
       }
     } else {
       setShowPrevious(false);
+    }
+  };
+
+  const recalculateMonth = async () => {
+    if (!selectedMonth) return;
+    
+    try {
+      setRecalculating(true);
+      const monthDate = parse(selectedMonth.month, 'MMMM yyyy', new Date());
+      const month = monthDate.getMonth();
+      const year = monthDate.getFullYear();
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0);
+
+      let totalExpenses = 0;
+      const expenseSnapshot = await getDocs(collection(db, 'expenses'));
+      expenseSnapshot.forEach(doc => {
+        const data = doc.data();
+        const date = parseDate(data.date);
+        if (date && date >= start && date <= end) {
+          totalExpenses += Number(data.amount || 0);
+        }
+      });
+
+      let totalIncome = 0;
+      const incomeSnapshot = await getDocs(collection(db, 'income'));
+      incomeSnapshot.forEach(doc => {
+        const data = doc.data();
+        const date = parseDate(data.date);
+        if (date && date >= start && date <= end) {
+          totalIncome += Number(data.amount || 0);
+        }
+      });
+
+      const avgCostSnapshot = await getDocs(collection(db, 'averageCosts'));
+      const avgCostMap = {};
+      avgCostSnapshot.forEach(doc => {
+        avgCostMap[doc.id] = Number(doc.data().avgCost || 0);
+      });
+
+      const productMap = {};
+      const salesSnapshot = await getDocs(collection(db, 'sales'));
+      salesSnapshot.forEach(doc => {
+        const data = doc.data();
+        const status = data.status?.toLowerCase();
+        const saleDate = parseDate(data.date);
+        if (status === 'delivered' && saleDate?.getMonth() === month && saleDate?.getFullYear() === year) {
+          data.products?.forEach(p => {
+            const code = p.productCode;
+            const qty = Number(p.quantity);
+            const cost = avgCostMap[code] || 0;
+            if (!productMap[code]) {
+              productMap[code] = { quantity: 0, avgCost: cost };
+            }
+            productMap[code].quantity += qty;
+          });
+        }
+      });
+
+      const productData = Object.keys(productMap).map(code => {
+        const { quantity, avgCost } = productMap[code];
+        return {
+          productCode: code,
+          quantity,
+          avgCost,
+          total: quantity * avgCost,
+        };
+      });
+
+      const totalProductCost = productData.reduce((sum, item) => sum + item.total, 0);
+      const profitLoss = totalIncome - (totalExpenses + totalProductCost);
+
+      const docRef = doc(db, 'monthlyProfit', `${year}-${month + 1}`);
+      await setDoc(docRef, {
+        month: selectedMonth.month,
+        expenses: totalExpenses,
+        income: totalIncome,
+        profitLoss,
+        totalProductCost,
+        productData,
+        timestamp: Timestamp.now(),
+      });
+
+      // Update the UI with recalculated data
+      const updatedData = previousData.map(item => 
+        item.month === selectedMonth.month ? {
+          ...item,
+          expenses: totalExpenses,
+          income: totalIncome,
+          profitLoss,
+          totalProductCost,
+          productData
+        } : item
+      );
+      
+      setPreviousData(updatedData);
+      setSelectedMonth(updatedData.find(item => item.month === selectedMonth.month));
+      Alert.alert("Success", "Month data recalculated successfully!");
+    } catch (error) {
+      console.log("Recalculation error:", error);
+      Alert.alert("Error", "Failed to recalculate month data");
+    } finally {
+      setRecalculating(false);
     }
   };
 
@@ -263,26 +375,67 @@ const MonthlyProfit = () => {
         <View style={[styles.card, { marginTop: 10 }]}>
           <Text style={styles.tableTitle}>Previous Months Data</Text>
           
-          {previousData.map((item, index) => (
-            <View key={index} style={[
+          <View style={styles.monthSelectorContainer}>
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              inputSearchStyle={styles.inputSearchStyle}
+              iconStyle={styles.iconStyle}
+              data={previousData.map(item => ({ label: item.month, value: item }))}
+              search
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder="Select month"
+              searchPlaceholder="Search..."
+              value={selectedMonth}
+              onChange={item => {
+                setSelectedMonth(item.value);
+              }}
+              renderLeftIcon={() => (
+                <AntDesign
+                  style={styles.icon}
+                  color={colors.primary}
+                  name="calendar"
+                  size={20}
+                />
+              )}
+            />
+            
+            <TouchableOpacity 
+              style={styles.recalculateButton}
+              onPress={recalculateMonth}
+              disabled={recalculating}
+            >
+              {recalculating ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.recalculateButtonText}>Recalculate</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {selectedMonth && (
+            <View style={[
               styles.prevCard,
-              { backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white' }
+              { backgroundColor: '#f9f9f9' }
             ]}>
-              <Text style={styles.prevMonth}>{item.month}</Text>
+              <Text style={styles.prevMonth}>{selectedMonth.month}</Text>
               
               <View style={styles.prevRow}>
                 <Text style={styles.prevLabel}>Expenses:</Text>
-                <Text style={[styles.prevValue, { color: 'red' }]}>₹{item.expenses.toFixed(2)}</Text>
+                <Text style={[styles.prevValue, { color: 'red' }]}>₹{selectedMonth.expenses.toFixed(2)}</Text>
               </View>
               
               <View style={styles.prevRow}>
                 <Text style={styles.prevLabel}>Income:</Text>
-                <Text style={[styles.prevValue, { color: 'green' }]}>₹{item.income.toFixed(2)}</Text>
+                <Text style={[styles.prevValue, { color: 'green' }]}>₹{selectedMonth.income.toFixed(2)}</Text>
               </View>
               
               <View style={styles.prevRow}>
                 <Text style={styles.prevLabel}>Product Cost:</Text>
-                <Text style={[styles.prevValue, { color: 'red' }]}>₹{item.totalProductCost.toFixed(2)}</Text>
+                <Text style={[styles.prevValue, { color: 'red' }]}>₹{selectedMonth.totalProductCost.toFixed(2)}</Text>
               </View>
               
               <View style={styles.prevRow}>
@@ -290,15 +443,15 @@ const MonthlyProfit = () => {
                 <Text style={[
                   styles.prevValue, 
                   { 
-                    color: item.profitLoss >= 0 ? 'green' : 'red',
+                    color: selectedMonth.profitLoss >= 0 ? 'green' : 'red',
                     fontWeight: 'bold'
                   }
                 ]}>
-                  ₹{item.profitLoss.toFixed(2)}
+                  ₹{selectedMonth.profitLoss.toFixed(2)}
                 </Text>
               </View>
             </View>
-          ))}
+          )}
         </View>
       )}
     </ScrollView>
@@ -309,6 +462,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#f5f5f5',
+    paddingBottom: 30,
   },
   card: {
     backgroundColor: 'white',
@@ -413,6 +567,53 @@ const styles = StyleSheet.create({
   prevValue: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  monthSelectorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  dropdown: {
+    flex: 1,
+    height: 50,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    marginRight: 10,
+  },
+  placeholderStyle: {
+    fontSize: 14,
+    color: '#999',
+  },
+  selectedTextStyle: {
+    fontSize: 14,
+    color: '#333',
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+  inputSearchStyle: {
+    height: 40,
+    fontSize: 14,
+  },
+  icon: {
+    marginRight: 5,
+  },
+  recalculateButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recalculateButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 

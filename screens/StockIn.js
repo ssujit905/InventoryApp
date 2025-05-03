@@ -99,16 +99,35 @@ const StockIn = () => {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              <Text style={styles.serialNumber}>{item.serial}</Text>
+              <View style={styles.serialContainer}>
+                <Text style={styles.serialNumber}>{item.serial}</Text>
+              </View>
               <View style={styles.cardContent}>
-                <Text style={styles.cardText}>Date: {item.date}</Text>
-                <Text style={styles.cardText}>Product Code: {item.productCode}</Text>
-                <Text style={styles.cardText}>Details: {item.productDetails}</Text>
-                <Text style={styles.cardText}>Quantity: {item.quantity}</Text>
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Date:</Text>
+                  <Text style={styles.cardValue}>{item.date}</Text>
+                </View>
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Product Code:</Text>
+                  <Text style={styles.cardValue}>{item.productCode}</Text>
+                </View>
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Details:</Text>
+                  <Text style={styles.cardValue}>{item.productDetails}</Text>
+                </View>
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Quantity:</Text>
+                  <Text style={[styles.cardValue, styles.quantityValue]}>{item.quantity}</Text>
+                </View>
               </View>
             </View>
           )}
-          ListEmptyComponent={<Text style={styles.emptyText}>No stock entries found</Text>}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No stock entries found</Text>
+            </View>
+          }
+          contentContainerStyle={styles.listContent}
         />
       )}
 
@@ -223,35 +242,66 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  listContent: {
     padding: 10,
   },
   card: {
     flexDirection: "row",
-   
-backgroundColor: colors.white,
+    backgroundColor: colors.white,
     padding: 15,
     borderRadius: 8,
     marginBottom: 10,
     elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  serialContainer: {
+    width: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   serialNumber: {
     fontSize: 18,
     fontWeight: "bold",
     color: colors.primary,
-    marginRight: 10,
   },
   cardContent: {
     flex: 1,
   },
-  cardText: {
-    fontSize: 16,
+  cardRow: {
+    flexDirection: 'row',
+    marginBottom: 6,
+    alignItems: 'flex-start',
+  },
+  cardLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    width: 100,
+  },
+  cardValue: {
+    fontSize: 14,
     color: colors.text,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  quantityValue: {
+    color: colors.primary,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   emptyText: {
-    textAlign: 'center',
-    marginTop: 20,
     fontSize: 16,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   fab: {
     position: "absolute",
@@ -259,7 +309,10 @@ backgroundColor: colors.white,
     right: 20,
     backgroundColor: colors.primary,
     borderRadius: 50,
-    padding: 16,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
     elevation: 5,
   },
   modalContainer: {
@@ -285,9 +338,11 @@ backgroundColor: colors.white,
     fontSize: 20,
     fontWeight: "bold",
     color: colors.white,
+    flex: 1,
   },
   closeButton: {
     padding: 4,
+    marginLeft: 10,
   },
   formContainer: {
     padding: 20,
@@ -303,7 +358,7 @@ backgroundColor: colors.white,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.lightGray,
     padding: 12,
     borderRadius: 8,
     backgroundColor: colors.white,
@@ -315,7 +370,7 @@ backgroundColor: colors.white,
     textAlignVertical: 'top',
   },
   errorText: {
-    color: '#ef4444',
+    color: colors.error,
     fontSize: 12,
     marginTop: 4,
   },
